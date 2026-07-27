@@ -101,6 +101,7 @@
           statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal: ${data.error || 'unknown error'}</span>`;
         }
       } catch (err) {
+        statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal mengirim: ${err}</span>`;
         statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal mengirim: ${err.message}</span>`;
       } finally {
         submitBtn.disabled = false;
