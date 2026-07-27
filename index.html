@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
   <div class="max-w-md mx-auto p-5">
     <h1 class="text-xl font-semibold text-gray-800 mb-1">Form Order</h1>
@@ -85,7 +87,7 @@
       try {
         const res = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -107,4 +109,5 @@
     });
   </script>
 </body>
+
 </html>
