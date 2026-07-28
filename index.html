@@ -52,36 +52,6 @@
       tg.expand();
     }
 
-    // 1. Ambil chatId dari URL Mini Apps
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('startapp') || '';
-
-    // 2. Saat form disubmit, kirim chatId ke Google Apps Script
-    async function submitOrder(orderData) {
-      // Ambil data user Telegram
-      let telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || null;
-
-      // Gabungkan data order dengan chatId dan telegramUser
-      const payload = {
-        ...orderData,
-        chatId: chatId, // Penting! Ini untuk kirim balasan ke grup
-        telegramUser: telegramUser
-      };
-
-      const response = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      if (result.ok) {
-        alert('Order berhasil dikirim!');
-        // Tutup mini apps setelah submit
-        window.Telegram.WebApp.close();
-      }
-    }
-
     function generateOrderId() {
       const now = new Date();
       const y = now.getFullYear();
