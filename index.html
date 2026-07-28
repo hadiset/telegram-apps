@@ -52,6 +52,11 @@
       tg.expand();
     }
 
+    // 1. Ambil chatId dari URL Mini Apps
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get('startapp') || '';
+
+
     function generateOrderId() {
       const now = new Date();
       const y = now.getFullYear();
@@ -81,7 +86,8 @@
         nama: document.getElementById('nama').value,
         tanggal: tanggalEl.value,
         telegramUser: tg ? tg.initDataUnsafe.user : null,
-        initData: tg ? tg.initData : null
+        initData: tg ? tg.initData : null,
+        chatId: chatId
       };
 
       try {
