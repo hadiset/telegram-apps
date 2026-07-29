@@ -44,18 +44,13 @@
 
   <script>
     // GANTI dengan URL .../exec dari deployment Apps Script kamu
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2LrMQV0-iSPwGG1IS1AVlCWTKXSvX63TC3iI-fnhoS8tRPvMTZKTZMu8OJJ8oHAa0/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
 
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) {
       tg.ready();
       tg.expand();
     }
-
-    // 1. Ambil chatId dari URL Mini Apps
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('startapp') || '';
-
 
     function generateOrderId() {
       const now = new Date();
@@ -87,7 +82,7 @@
         tanggal: tanggalEl.value,
         telegramUser: tg ? tg.initDataUnsafe.user : null,
         initData: tg ? tg.initData : null,
-        chatId: chatId
+        startParam: tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : null
       };
 
       try {
@@ -107,7 +102,6 @@
           statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal: ${data.error || 'unknown error'}</span>`;
         }
       } catch (err) {
-        statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal mengirim: ${err}</span>`;
         statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal mengirim: ${err.message}</span>`;
       } finally {
         submitBtn.disabled = false;
