@@ -17,7 +17,7 @@
     <form id="orderForm" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">ID Order</label>
-        <input id="orderId" type="text" readonly
+        <input id="orderId" type="text" readonly value="Dibuat otomatis setelah submit"
           class="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500 text-sm">
       </div>
 
@@ -33,6 +33,18 @@
           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
 
+      <div>
+        <label for="resi" class="block text-sm font-medium text-gray-700 mb-1">Resi Order (PDF)</label>
+        <input id="resi" name="resi" type="file" accept="application/pdf"
+          class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm">
+      </div>
+
+      <div>
+        <label for="bukti" class="block text-sm font-medium text-gray-700 mb-1">Bukti Transfer (JPG/PNG)</label>
+        <input id="bukti" name="bukti" type="file" accept="image/jpeg,image/png"
+          class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm">
+      </div>
+
       <button id="submitBtn" type="submit"
         class="w-full rounded-lg bg-blue-600 text-white font-medium py-2.5 text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
         Simpan Order
@@ -44,7 +56,7 @@
 
   <script>
     // GANTI dengan URL .../exec dari deployment Apps Script kamu
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
+    const APPS_SCRIPT_URL = 'PASTE_URL_EXEC_APPS_SCRIPT_DI_SINI';
 
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) {
@@ -52,19 +64,26 @@
       tg.expand();
     }
 
-    function generateOrderId() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return `ORD-${y}${m}${d}-${rand}`;
-    }
-
     const orderIdEl = document.getElementById('orderId');
     const tanggalEl = document.getElementById('tanggal');
-    orderIdEl.value = generateOrderId();
     tanggalEl.valueAsDate = new Date();
+
+    function readFileAsBase64(fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return Promise.resolve(null);
+      if (file.size > 5 * 1024 * 1024) {
+        return Promise.reject(new Error(`File "${file.name}" lebih dari 5MB, mohon kompres dulu.`));
+      }
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve({data: base64, filename: file.name, mimeType: file.type});
+        };
+        reader.onerror = () => reject(new Error(`Gagal membaca file "${file.name}".`));
+        reader.readAsDataURL(file);
+      });
+    }
 
     const form = document.getElementById('orderForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -76,16 +95,22 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Menyimpan...';
 
-      const payload = {
-        id: orderIdEl.value,
-        nama: document.getElementById('nama').value,
-        tanggal: tanggalEl.value,
-        telegramUser: tg ? tg.initDataUnsafe.user : null,
-        initData: tg ? tg.initData : null,
-        startParam: tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : null
-      };
-
       try {
+        const [resi, bukti] = await Promise.all([
+          readFileAsBase64(document.getElementById('resi')),
+          readFileAsBase64(document.getElementById('bukti'))
+        ]);
+
+        const payload = {
+          nama: document.getElementById('nama').value,
+          tanggal: tanggalEl.value,
+          telegramUser: tg ? tg.initDataUnsafe.user : null,
+          initData: tg ? tg.initData : null,
+          startParam: tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : null,
+          resi: resi,
+          bukti: bukti
+        };
+
         const res = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -94,9 +119,11 @@
         const data = await res.json();
 
         if (data.ok) {
+          orderIdEl.value = data.id;
           statusEl.innerHTML = `<span class="text-green-600 font-medium">Berhasil disimpan.</span> ID: ${data.id}`;
           document.getElementById('nama').value = '';
-          orderIdEl.value = generateOrderId();
+          document.getElementById('resi').value = '';
+          document.getElementById('bukti').value = '';
           if (tg) tg.HapticFeedback.notificationOccurred('success');
         } else {
           statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal: ${data.error || 'unknown error'}</span>`;
