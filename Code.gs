@@ -19,12 +19,9 @@ function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
 
-    // Update dari Telegram (webhook) selalu punya field update_id
     if (body.update_id !== undefined) {
       return handleTelegramUpdate_(body);
     }
-
-    // Selain itu: submission dari Mini App form
     return handleOrderSubmission_(body);
   } catch (err) {
     return jsonOutput_({ ok: false, error: err.message });
@@ -64,16 +61,33 @@ function handleOrderSubmission_(payload) {
   if (!payload.nama || !payload.tanggal) {
     throw new Error('Field nama atau tanggal kosong.');
   }
+  if (!payload.resi || !payload.resi.data) {
+    throw new Error('File RESI (PDF) wajib diunggah.');
+  }
+
+  // VALIDASI BACKEND: Minimal 1 produk harus diisi
+  var products = payload.products || {};
+  var hasProduct = false;
+  for (var key in products) {
+    if (Number(products[key]) > 0) {
+      hasProduct = true;
+      break;
+    }
+  }
+  if (!hasProduct) {
+    throw new Error('Minimal harus mengisi 1 produk dengan jumlah > 0.');
+  }
 
   var orderId = generateOrderId_();
-  var pic = getPicFromInitData_(payload.initData);
+  var userInfo = getUserInfoFromInitData_(payload.initData);
+  var pic = userInfo.pic;
+  var picId = userInfo.id;
   
   var now = new Date();
   var tz = Session.getScriptTimeZone();
   var tanggal = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   var waktu = Utilities.formatDate(now, tz, 'HH:mm:ss');
 
-  // Susun data dasar
   var baseData = {
     'ID': orderId,
     'TANGGAL': tanggal,
@@ -86,8 +100,6 @@ function handleOrderSubmission_(payload) {
     'LABEL': '',
     'KETERANGAN': payload.keterangan || ''
   };
-
-  var products = payload.products || {};
 
   // 1. Input ke sheet order SK (Ozza + SK)
   var skSheet = getSheetByName_('order SK', getSkHeaders_());
@@ -108,11 +120,33 @@ function handleOrderSubmission_(payload) {
   if (payload.startParam) {
     try {
       var chatId = base64UrlDecode_(payload.startParam);
-      var text = '✅ Order berhasil disimpan\n' +
-        'ID: ' + orderId + '\n' +
-        'Nama: ' + payload.nama + '\n' +
-        'Tanggal: ' + tanggal;
-      callTelegramApi_('sendMessage', { chat_id: chatId, text: text });
+      
+      // Susun list produk yang diisi
+      var productText = '';
+      for (var p in products) {
+        if (Number(products[p]) > 0) {
+          productText += '• ' + p + ' : ' + products[p] + '\n';
+        }
+      }
+      
+      // Format mention CS: [Nama CS](tg://user?id=ID_CS)
+      var picMention = picId ? `[${escapeMarkdown_(pic)}](tg://user?id=${picId})` : escapeMarkdown_(pic);
+      
+      var text = '✅ *Order berhasil disimpan*\n' +
+        'ID: `' + orderId + '`\n' +
+        'Nama: ' + escapeMarkdown_(payload.nama) + '\n' +
+        'Tanggal: ' + tanggal + '\n' +
+        'PIC: ' + picMention + '\n' +
+        'TOTAL: Rp ' + formatRupiah_(payload.total) + '\n' +
+        'GUDANG: ' + payload.gudang + '\n' +
+        'KETERANGAN: ' + escapeMarkdown_(payload.keterangan || '-') + '\n' +
+        'PRODUK:\n' + productText;
+        
+      callTelegramApi_('sendMessage', { 
+        chat_id: chatId, 
+        text: text,
+        parse_mode: 'Markdown' 
+      });
 
       if (payload.resi && payload.resi.data) {
         sendTelegramDocument_(chatId, payload.resi.data, payload.resi.filename || 'resi.pdf', payload.resi.mimeType, 'Resi Order - ' + orderId);
@@ -152,7 +186,7 @@ function getSr12Headers_() {
 }
 
 function getParanetHeaders_() {
-  return ['TANGGAL','WAKTU','PIC','NAMA','TOTAL','GUDANG','RINGKASAN','LABEL','KETERANGAN',
+  return ['ID','TANGGAL','WAKTU','PIC','NAMA','TOTAL','GUDANG','RINGKASAN','LABEL','KETERANGAN',
   'PARANET 2M x 2M','PARANET 2M x 3M','PARANET 2M x 4M','PARANET 2M x 5M','PARANET 2M x 6M','PARANET 2M x 7M','PARANET 2M x 8M','PARANET 2M x 9M','PARANET 2M x 10M',
   'PARANET 3M x 2M','PARANET 3M x 3M','PARANET 3M x 4M','PARANET 3M x 5M','PARANET 3M x 6M','PARANET 3M x 7M','PARANET 3M x 8M','PARANET 3M x 9M','PARANET 3M x 10M',
   'PARANET 4M x 2M','PARANET 4M x 3M','PARANET 4M x 4M','PARANET 4M x 5M','PARANET 4M x 6M','PARANET 4M x 7M','PARANET 4M x 8M','PARANET 4M x 9M','PARANET 4M x 10M'];
@@ -167,7 +201,7 @@ function buildSkRow_(base, products) {
   ozza.concat(sk).forEach(function(p) {
     var val = Number(products[p] || 0);
     if (val > 0) hasData = true;
-    row.push(val);
+    row.push(val > 0 ? val : ''); 
   });
   return hasData ? row : null;
 }
@@ -180,21 +214,20 @@ function buildSr12Row_(base, products) {
   sr12.forEach(function(p) {
     var val = Number(products[p] || 0);
     if (val > 0) hasData = true;
-    row.push(val);
+    row.push(val > 0 ? val : ''); 
   });
   return hasData ? row : null;
 }
 
 function buildParanetRow_(base, products) {
   var hasData = false;
-  // Sesuai task.md, Paranet TIDAK PUNYA kolom ID
-  var row = [base.TANGGAL, base.WAKTU, base.PIC, base.NAMA, base.TOTAL, base.GUDANG, base.RINGKASAN, base.LABEL, base.KETERANGAN];
+  var row = [base.ID, base.TANGGAL, base.WAKTU, base.PIC, base.NAMA, base.TOTAL, base.GUDANG, base.RINGKASAN, base.LABEL, base.KETERANGAN];
   var paranet = ['PARANET 2M x 2M','PARANET 2M x 3M','PARANET 2M x 4M','PARANET 2M x 5M','PARANET 2M x 6M','PARANET 2M x 7M','PARANET 2M x 8M','PARANET 2M x 9M','PARANET 2M x 10M','PARANET 3M x 2M','PARANET 3M x 3M','PARANET 3M x 4M','PARANET 3M x 5M','PARANET 3M x 6M','PARANET 3M x 7M','PARANET 3M x 8M','PARANET 3M x 9M','PARANET 3M x 10M','PARANET 4M x 2M','PARANET 4M x 3M','PARANET 4M x 4M','PARANET 4M x 5M','PARANET 4M x 6M','PARANET 4M x 7M','PARANET 4M x 8M','PARANET 4M x 9M','PARANET 4M x 10M'];
   
   paranet.forEach(function(p) {
     var val = Number(products[p] || 0);
     if (val > 0) hasData = true;
-    row.push(val);
+    row.push(val > 0 ? val : ''); 
   });
   return hasData ? row : null;
 }
@@ -305,8 +338,8 @@ function validateInitData_(initDataRaw, botToken) {
   return computedHash === hash;
 }
 
-/** ===== Helper Baru: Ambil First & Last Name untuk PIC ===== */
-function getPicFromInitData_(initDataRaw) {
+function getUserInfoFromInitData_(initDataRaw) {
+  var result = { pic: '', id: '' };
   try {
     var params = initDataRaw.split('&');
     for (var i = 0; i < params.length; i++) {
@@ -317,13 +350,27 @@ function getPicFromInitData_(initDataRaw) {
         var userObj = JSON.parse(value);
         var firstName = userObj.first_name || '';
         var lastName = userObj.last_name || '';
-        return (firstName + ' ' + lastName).trim();
+        result.pic = (firstName + ' ' + lastName).trim();
+        result.id = userObj.id || '';
+        break;
       }
     }
-  } catch (e) {
-    return '';
-  }
-  return '';
+  } catch (e) {}
+  return result;
+}
+
+/** Escaping karakter biar gak rusak format Markdown Telegram */
+function escapeMarkdown_(text) {
+  if (!text) return '';
+  return String(text).replace(/([_*`[])/g, '\\$1');
+}
+
+/** Helper Format Rupiah */
+function formatRupiah_(angka) {
+  if (!angka) return '0';
+  var number = Number(angka);
+  // Menggunakan regex untuk menambahkan titik setiap 3 digit angka
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function bytesToHex_(bytes) {

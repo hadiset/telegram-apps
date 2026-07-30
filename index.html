@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Form Order Telegram</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -136,7 +137,7 @@
       </div>
       <div class="form-group">
         <label>TOTAL (Nominal) *</label>
-        <input type="number" id="total" required>
+        <input type="text" inputmode="numeric" id="total" required placeholder="0">
       </div>
       <div class="form-group">
         <label>GUDANG *</label>
@@ -200,6 +201,15 @@
     generateProductFields('TabSR12', products.sr12);
     generateProductFields('TabParanet', products.paranet);
 
+    // Format input TOTAL jadi 000.000 sambil user ngetik, nilai asli (angka murni)
+    // disimpan di dataset.raw supaya yang dikirim ke backend tetap angka bersih.
+    const totalInput = document.getElementById('total');
+    totalInput.addEventListener('input', function () {
+      const raw = this.value.replace(/\D/g, '');
+      this.dataset.raw = raw;
+      this.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+    });
+
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tab-content");
@@ -236,7 +246,8 @@
 
     async function submitForm() {
       const nama = document.getElementById('nama').value;
-      const total = document.getElementById('total').value;
+      const totalInput = document.getElementById('total');
+      const total = totalInput.dataset.raw || totalInput.value.replace(/\D/g, '');
       const gudang = document.getElementById('gudang').value;
       const keterangan = document.getElementById('keterangan').value;
 
@@ -300,8 +311,14 @@
         const data = await response.json();
 
         if (data.ok) {
-          document.querySelector('.container').innerHTML = `<div style="text-align:center; padding: 50px 20px;"><h2>✅ Berhasil</h2><p>Order ID: ${data.id}</p></div>`;
-          btn.style.display = 'none';
+          Swal.fire({
+            title: "Good job!",
+            text: "Order berhasil disimpan. ID: " + data.id,
+            icon: "success",
+            confirmButtonText: "OK"
+          }).then(() => {
+            location.reload();
+          });
         } else {
           alert('Gagal: ' + (data.error || 'Unknown error'));
           btn.disabled = false;
