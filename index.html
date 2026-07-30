@@ -83,6 +83,15 @@
       font-size: 14px;
     }
 
+    input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
     textarea {
       resize: vertical;
       min-height: 60px;
@@ -139,12 +148,20 @@
         </select>
       </div>
       <div class="form-group">
+        <label>RESI (PDF) *</label>
+        <input type="file" id="file_resi" accept="application/pdf" required>
+      </div>
+      <div class="form-group">
+        <label>BUKTI TRANSFER (JPG/PNG)</label>
+        <input type="file" id="file_bukti" accept="image/png, image/jpeg">
+      </div>
+      <div class="form-group">
         <label>KETERANGAN</label>
         <textarea id="keterangan" placeholder="Catatan tambahan..."></textarea>
       </div>
     </div>
 
-    <!-- Tab Produk Lainnya (Diisi otomatis oleh JS) -->
+    <!-- Tab Produk Lainnya -->
     <div id="TabOzza" class="tab-content"></div>
     <div id="TabSK" class="tab-content"></div>
     <div id="TabSR12" class="tab-content"></div>
@@ -154,7 +171,6 @@
   <button class="btn-submit" onclick="submitForm()">SIMPAN ORDER</button>
 
   <script>
-    // GANTI DENGAN URL WEB APP EXEC KAMU
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
 
     const products = {
@@ -164,7 +180,7 @@
       paranet: ['PARANET 2M x 2M', 'PARANET 2M x 3M', 'PARANET 2M x 4M', 'PARANET 2M x 5M', 'PARANET 2M x 6M', 'PARANET 2M x 7M', 'PARANET 2M x 8M', 'PARANET 2M x 9M', 'PARANET 2M x 10M', 'PARANET 3M x 2M', 'PARANET 3M x 3M', 'PARANET 3M x 4M', 'PARANET 3M x 5M', 'PARANET 3M x 6M', 'PARANET 3M x 7M', 'PARANET 3M x 8M', 'PARANET 3M x 9M', 'PARANET 3M x 10M', 'PARANET 4M x 2M', 'PARANET 4M x 3M', 'PARANET 4M x 4M', 'PARANET 4M x 5M', 'PARANET 4M x 6M', 'PARANET 4M x 7M', 'PARANET 4M x 8M', 'PARANET 4M x 9M', 'PARANET 4M x 10M']
     };
 
-    // Generate Field Produk secara otomatis
+    // Generate Field Produk
     function generateProductFields(tabId, prodList) {
       const container = document.getElementById(tabId);
       let html = '';
@@ -185,7 +201,6 @@
     generateProductFields('TabSR12', products.sr12);
     generateProductFields('TabParanet', products.paranet);
 
-    // Fungsi Stepper Tab
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tab-content");
@@ -200,15 +215,45 @@
       evt.currentTarget.classList.add("active");
     }
 
-    // Fungsi Submit
-    function submitForm() {
+    // Helper: Konversi File ke Base64
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          // Hasil: data:application/pdf;base64,XXXX
+          const base64String = reader.result.split(',')[1];
+          resolve({
+            data: base64String,
+            filename: file.name,
+            mimeType: file.type
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Fungsi Submit (Async karena ada proses baca file)
+    async function submitForm() {
       const nama = document.getElementById('nama').value;
       const total = document.getElementById('total').value;
       const gudang = document.getElementById('gudang').value;
       const keterangan = document.getElementById('keterangan').value;
 
+      const fileResi = document.getElementById('file_resi').files[0];
+      const fileBukti = document.getElementById('file_bukti').files[0];
+
       if (!nama || !total || !gudang) {
         alert('Mohon isi NAMA, TOTAL, dan GUDANG di Tab Utama.');
+        return;
+      }
+
+      if (!fileResi) {
+        alert('Mohon unggah File RESI (PDF) di Tab Utama.');
         return;
       }
 
@@ -223,42 +268,49 @@
         }
       });
 
-      const tg = window.Telegram.WebApp;
-      const payload = {
-        initData: tg.initData || '',
-        startParam: tg.initDataUnsafe ? tg.initDataUnsafe.start_param : '',
-        nama: nama,
-        total: total,
-        gudang: gudang,
-        keterangan: keterangan,
-        tanggal: new Date().toISOString(),
-        products: productsData
-      };
-
       const btn = document.querySelector('.btn-submit');
       btn.disabled = true;
-      btn.innerText = 'Memproses...';
+      btn.innerText = 'Mengunggah Data...';
 
-      fetch(WEB_APP_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.ok) {
-            document.querySelector('.container').innerHTML = `<div style="text-align:center; padding: 50px 20px;"><h2>✅ Berhasil</h2><p>Order ID: ${data.id}</p></div>`;
-            btn.style.display = 'none';
-          } else {
-            alert('Gagal: ' + (data.error || 'Unknown error'));
-            btn.disabled = false;
-            btn.innerText = 'SIMPAN ORDER';
-          }
-        })
-        .catch(err => {
-          alert('Error koneksi: ' + err.message);
+      try {
+        // Convert file ke base64
+        const resiBase64 = await readFileAsBase64(fileResi);
+        const buktiBase64 = await readFileAsBase64(fileBukti);
+
+        const tg = window.Telegram.WebApp;
+        const payload = {
+          initData: tg.initData || '',
+          startParam: tg.initDataUnsafe ? tg.initDataUnsafe.start_param : '',
+          nama: nama,
+          total: total,
+          gudang: gudang,
+          keterangan: keterangan,
+          tanggal: new Date().toISOString(),
+          products: productsData,
+          resi: resiBase64,
+          bukti: buktiBase64
+        };
+
+        const response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          document.querySelector('.container').innerHTML = `<div style="text-align:center; padding: 50px 20px;"><h2>✅ Berhasil</h2><p>Order ID: ${data.id}</p></div>`;
+          btn.style.display = 'none';
+        } else {
+          alert('Gagal: ' + (data.error || 'Unknown error'));
           btn.disabled = false;
           btn.innerText = 'SIMPAN ORDER';
-        });
+        }
+      } catch (err) {
+        alert('Error koneksi/parsing: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'SIMPAN ORDER';
+      }
     }
   </script>
 </body>
