@@ -2,139 +2,264 @@
 <html lang="id">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Form Order</title>
-  <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Order Telegram</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+      color: #333;
+    }
+
+    .container {
+      padding: 15px;
+      padding-bottom: 80px;
+    }
+
+    .tabs {
+      display: flex;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tab-link {
+      padding: 12px 15px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #666;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-link.active {
+      color: #0088cc;
+      border-bottom: 2px solid #0088cc;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+      background: #fff;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .btn-submit {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px;
+      background: #0088cc;
+      color: #fff;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    .btn-submit:disabled {
+      background: #99ccdd;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
-  <div class="max-w-md mx-auto p-5">
-    <h1 class="text-xl font-semibold text-gray-800 mb-1">Form Order</h1>
-    <p class="text-sm text-gray-500 mb-5">ID order dicatat otomatis, kamu cukup isi nama dan tanggal.</p>
+<body>
 
-    <form id="orderForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ID Order</label>
-        <input id="orderId" type="text" readonly value="Dibuat otomatis setelah submit"
-          class="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500 text-sm">
-      </div>
-
-      <div>
-        <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-        <input id="nama" name="nama" type="text" required placeholder="Contoh: Bu Tri Indah"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-
-      <div>
-        <label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-        <input id="tanggal" name="tanggal" type="date" required
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-
-      <div>
-        <label for="resi" class="block text-sm font-medium text-gray-700 mb-1">Resi Order (PDF)</label>
-        <input id="resi" name="resi" type="file" accept="application/pdf"
-          class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm">
-      </div>
-
-      <div>
-        <label for="bukti" class="block text-sm font-medium text-gray-700 mb-1">Bukti Transfer (JPG/PNG)</label>
-        <input id="bukti" name="bukti" type="file" accept="image/jpeg,image/png"
-          class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm">
-      </div>
-
-      <button id="submitBtn" type="submit"
-        class="w-full rounded-lg bg-blue-600 text-white font-medium py-2.5 text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-        Simpan Order
-      </button>
-    </form>
-
-    <div id="status" class="mt-4 text-sm"></div>
+  <div class="tabs">
+    <button class="tab-link active" onclick="openTab(event, 'TabUtama')">1. Utama</button>
+    <button class="tab-link" onclick="openTab(event, 'TabOzza')">2. Ozza</button>
+    <button class="tab-link" onclick="openTab(event, 'TabSK')">3. SK</button>
+    <button class="tab-link" onclick="openTab(event, 'TabSR12')">4. SR12</button>
+    <button class="tab-link" onclick="openTab(event, 'TabParanet')">5. Paranet</button>
   </div>
 
+  <div class="container">
+    <!-- 1. Tab Utama -->
+    <div id="TabUtama" class="tab-content active">
+      <div class="form-group">
+        <label>NAMA (Pemesan) *</label>
+        <input type="text" id="nama" required>
+      </div>
+      <div class="form-group">
+        <label>TOTAL (Nominal) *</label>
+        <input type="number" id="total" required>
+      </div>
+      <div class="form-group">
+        <label>GUDANG *</label>
+        <select id="gudang" required>
+          <option value="">Pilih Gudang</option>
+          <option value="BGR">BGR</option>
+          <option value="MDN">MDN</option>
+          <option value="MKS">MKS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>KETERANGAN</label>
+        <textarea id="keterangan" placeholder="Catatan tambahan..."></textarea>
+      </div>
+    </div>
+
+    <!-- Tab Produk Lainnya (Diisi otomatis oleh JS) -->
+    <div id="TabOzza" class="tab-content"></div>
+    <div id="TabSK" class="tab-content"></div>
+    <div id="TabSR12" class="tab-content"></div>
+    <div id="TabParanet" class="tab-content"></div>
+  </div>
+
+  <button class="btn-submit" onclick="submitForm()">SIMPAN ORDER</button>
+
   <script>
-    // GANTI dengan URL .../exec dari deployment Apps Script kamu
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
+    // GANTI DENGAN URL WEB APP EXEC KAMU
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
 
-    const tg = window.Telegram ? window.Telegram.WebApp : null;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-    }
+    const products = {
+      ozza: ['PAKET ULTIMATE OZZA', 'PAKET BASIC OZZA', 'DAY CREAM OZZA', 'NIGHT CREAM OZZA', 'SUNSCREEN OZZA', 'FACIAL WASH OZZA', 'DARKSPOT SERUM OZZA', 'PEELING SERUM OZZA 3in1', 'TONER OZZA', 'EYE CARE OZZA', 'LEVEL UP SUNSCREEN OZZA', 'HYPERPIGMENTATION OZZA'],
+      sk: ['IXORA 01', 'GUAVA 02', 'CHAESA 03', 'CHERRY BLOSSOM 04', 'PLUM 05', 'MAHATIC OMBRE', 'MAHATIC BOX', 'DS SATUAN', 'DS BOX', 'VLORIN SKIN SATUAN', 'VLORIN SKIN BOX', 'MADU MAGANZA', 'HARUMU NEW ELEGANT', 'HARUMU LOVABLE', 'HARUMU MAXIMA', 'HARUMU FREANKY', 'HARUMU PAKET', 'KRIM PARAMA', 'JCC OIL', 'PARFUM MEISIE', 'HIJAB SELLORA', 'NAKDE SNACK'],
+      sr12: ['GOMILKU 600G ORIGINAL', 'GOMILKU 600G COKLAT', 'GOMILKU 600G STRAWBERI', 'GOMILKU 600G GOLD', 'MANJA SR12 KAPSUL 60 KAPSUL', 'MANJA SR12 PIL 60 PIL', 'MISS MANJA WASH AND SPRAY', 'DEODORANT SPRAY 60 ML', 'DEO SPRAY PREMIUM 60 ML', 'DAILY COVER 10G NATURAL', 'DAILY COVER 10G SHEER PINK', 'DAILY COVER 10G BEIGE', 'MATTE COVER LOOSE POWDER 15G', 'BB CREAM NATURAL BEIGE 30ML', 'LIP CARE CHERRY 5G', 'LIP CARE NATURAL 5G', 'LIP BALM CHERRY MOISTURIZER & LIP COLOUR SR12'],
+      paranet: ['PARANET 2M x 2M', 'PARANET 2M x 3M', 'PARANET 2M x 4M', 'PARANET 2M x 5M', 'PARANET 2M x 6M', 'PARANET 2M x 7M', 'PARANET 2M x 8M', 'PARANET 2M x 9M', 'PARANET 2M x 10M', 'PARANET 3M x 2M', 'PARANET 3M x 3M', 'PARANET 3M x 4M', 'PARANET 3M x 5M', 'PARANET 3M x 6M', 'PARANET 3M x 7M', 'PARANET 3M x 8M', 'PARANET 3M x 9M', 'PARANET 3M x 10M', 'PARANET 4M x 2M', 'PARANET 4M x 3M', 'PARANET 4M x 4M', 'PARANET 4M x 5M', 'PARANET 4M x 6M', 'PARANET 4M x 7M', 'PARANET 4M x 8M', 'PARANET 4M x 9M', 'PARANET 4M x 10M']
+    };
 
-    const orderIdEl = document.getElementById('orderId');
-    const tanggalEl = document.getElementById('tanggal');
-    tanggalEl.valueAsDate = new Date();
-
-    function readFileAsBase64(fileInput) {
-      const file = fileInput.files[0];
-      if (!file) return Promise.resolve(null);
-      if (file.size > 5 * 1024 * 1024) {
-        return Promise.reject(new Error(`File "${file.name}" lebih dari 5MB, mohon kompres dulu.`));
-      }
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          resolve({data: base64, filename: file.name, mimeType: file.type});
-        };
-        reader.onerror = () => reject(new Error(`Gagal membaca file "${file.name}".`));
-        reader.readAsDataURL(file);
+    // Generate Field Produk secara otomatis
+    function generateProductFields(tabId, prodList) {
+      const container = document.getElementById(tabId);
+      let html = '';
+      prodList.forEach(prod => {
+        const safeId = 'prod_' + prod.replace(/[^a-zA-Z0-9]/g, '_');
+        html += `
+          <div class="form-group">
+            <label>${prod}</label>
+            <input type="number" id="${safeId}" data-product-name="${prod}" min="0" placeholder="0">
+          </div>
+        `;
       });
+      container.innerHTML = html;
     }
 
-    const form = document.getElementById('orderForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const statusEl = document.getElementById('status');
+    generateProductFields('TabOzza', products.ozza);
+    generateProductFields('TabSK', products.sk);
+    generateProductFields('TabSR12', products.sr12);
+    generateProductFields('TabParanet', products.paranet);
 
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      statusEl.textContent = '';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Menyimpan...';
-
-      try {
-        const [resi, bukti] = await Promise.all([
-          readFileAsBase64(document.getElementById('resi')),
-          readFileAsBase64(document.getElementById('bukti'))
-        ]);
-
-        const payload = {
-          nama: document.getElementById('nama').value,
-          tanggal: tanggalEl.value,
-          telegramUser: tg ? tg.initDataUnsafe.user : null,
-          initData: tg ? tg.initData : null,
-          startParam: tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : null,
-          resi: resi,
-          bukti: bukti
-        };
-
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-
-        if (data.ok) {
-          orderIdEl.value = data.id;
-          statusEl.innerHTML = `<span class="text-green-600 font-medium">Berhasil disimpan.</span> ID: ${data.id}`;
-          document.getElementById('nama').value = '';
-          document.getElementById('resi').value = '';
-          document.getElementById('bukti').value = '';
-          if (tg) tg.HapticFeedback.notificationOccurred('success');
-        } else {
-          statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal: ${data.error || 'unknown error'}</span>`;
-        }
-      } catch (err) {
-        statusEl.innerHTML = `<span class="text-red-600 font-medium">Gagal mengirim: ${err.message}</span>`;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Simpan Order';
+    // Fungsi Stepper Tab
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tab-content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
       }
-    });
+      tablinks = document.getElementsByClassName("tab-link");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+      }
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+
+    // Fungsi Submit
+    function submitForm() {
+      const nama = document.getElementById('nama').value;
+      const total = document.getElementById('total').value;
+      const gudang = document.getElementById('gudang').value;
+      const keterangan = document.getElementById('keterangan').value;
+
+      if (!nama || !total || !gudang) {
+        alert('Mohon isi NAMA, TOTAL, dan GUDANG di Tab Utama.');
+        return;
+      }
+
+      // Kumpulkan qty produk
+      const productInputs = document.querySelectorAll('[data-product-name]');
+      const productsData = {};
+      productInputs.forEach(input => {
+        const name = input.getAttribute('data-product-name');
+        const val = input.value;
+        if (val && Number(val) > 0) {
+          productsData[name] = Number(val);
+        }
+      });
+
+      const tg = window.Telegram.WebApp;
+      const payload = {
+        initData: tg.initData || '',
+        startParam: tg.initDataUnsafe ? tg.initDataUnsafe.start_param : '',
+        nama: nama,
+        total: total,
+        gudang: gudang,
+        keterangan: keterangan,
+        tanggal: new Date().toISOString(),
+        products: productsData
+      };
+
+      const btn = document.querySelector('.btn-submit');
+      btn.disabled = true;
+      btn.innerText = 'Memproses...';
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            document.querySelector('.container').innerHTML = `<div style="text-align:center; padding: 50px 20px;"><h2>✅ Berhasil</h2><p>Order ID: ${data.id}</p></div>`;
+            btn.style.display = 'none';
+          } else {
+            alert('Gagal: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerText = 'SIMPAN ORDER';
+          }
+        })
+        .catch(err => {
+          alert('Error koneksi: ' + err.message);
+          btn.disabled = false;
+          btn.innerText = 'SIMPAN ORDER';
+        });
+    }
   </script>
 </body>
 
