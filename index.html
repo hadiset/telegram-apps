@@ -178,7 +178,7 @@
       </div>
       <div class="form-group">
         <label>TOTAL (Nominal) *</label>
-        <input type="number" id="total" required>
+        <input type="text" id="total" required>
       </div>
       <div class="form-group">
         <label>GUDANG *</label>
@@ -284,6 +284,15 @@
       content.classList.toggle('active');
     }
 
+    // Format input TOTAL jadi 000.000 sambil user ngetik, nilai asli (angka murni)
+    // disimpan di dataset.raw supaya yang dikirim ke backend tetap angka bersih.
+    const totalInput = document.getElementById('total');
+    totalInput.addEventListener('input', function () {
+      const raw = this.value.replace(/\D/g, '');
+      this.dataset.raw = raw;
+      this.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+    });
+
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tab-content");
@@ -320,7 +329,8 @@
 
     async function submitForm() {
       const nama = document.getElementById('nama').value;
-      const total = document.getElementById('total').value;
+      const totalInput = document.getElementById('total');
+      const total = totalInput.dataset.raw || totalInput.value.replace(/\D/g, '');
       const gudang = document.getElementById('gudang').value;
       const keterangan = document.getElementById('keterangan').value;
 
@@ -411,16 +421,12 @@
         if (data.ok) {
           btn.style.display = 'none';
           Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            html: `Order ID: <b>${data.id}</b> telah disimpan.`,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0088cc',
-            allowOutsideClick: false
-          }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.reload(); // Auto reload halaman
-            }
+            title: "Good job!",
+            text: "Order berhasil disimpan. ID: " + data.id,
+            icon: "success",
+            confirmButtonText: "OK"
+          }).then(() => {
+            location.reload();
           });
         } else {
           Swal.fire({
