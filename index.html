@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Form Order Telegram</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -115,6 +114,46 @@
     .btn-submit:disabled {
       background: #99ccdd;
     }
+
+    /* CSS untuk Accordion Paranet */
+    .accordion-group {
+      margin-bottom: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      background: #f7f7f7;
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+    }
+
+    .accordion-header:after {
+      content: '▼';
+      font-size: 12px;
+      color: #666;
+      transition: transform 0.2s;
+    }
+
+    .accordion-header.active:after {
+      transform: rotate(180deg);
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .accordion-content.active {
+      display: block;
+    }
   </style>
 </head>
 
@@ -137,7 +176,7 @@
       </div>
       <div class="form-group">
         <label>TOTAL (Nominal) *</label>
-        <input type="text" inputmode="numeric" id="total" required placeholder="0">
+        <input type="number" id="total" required>
       </div>
       <div class="form-group">
         <label>GUDANG *</label>
@@ -175,12 +214,25 @@
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwGrr34wZhqPrt-B-uwByzXhsnVS8IJYz7OqbKy-opB2vLTIlgkU0H4iK9x6UXY7vdilg/exec';
 
     const products = {
-      ozza: ['PAKET ULTIMATE OZZA', 'PAKET BASIC OZZA', 'DAY CREAM OZZA', 'NIGHT CREAM OZZA', 'SUNSCREEN OZZA', 'FACIAL WASH OZZA', 'DARKSPOT SERUM OZZA', 'PEELING SERUM OZZA 3in1', 'TONER OZZA', 'EYE CARE OZZA', 'LEVEL UP SUNSCREEN OZZA', 'HYPERPIGMENTATION OZZA'],
+      ozza: ['PAKET ULTIMATE OZZA', 'PAKET BASIC OZZA', 'DAY CREAM OZZA', 'NIGHT CREAM OZZA', 'SUNSCREEN OZZA', 'FACIAL WASH OZZA', 'DARKSPOT SERUM OZZA', 'PEELING SERUM OZZA', '3in1 TONER OZZA', 'EYE CARE OZZA', 'LEVEL UP SUNSCREEN OZZA', 'HYPERPIGMENTATION OZZA', 'BOOSTER CREAM OZZA', 'GLASS LOCK LIPSTICK OZZA', 'HYDRA MATTE LIPSTICK OZZA'],
       sk: ['IXORA 01', 'GUAVA 02', 'CHAESA 03', 'CHERRY BLOSSOM 04', 'PLUM 05', 'MAHATIC OMBRE', 'MAHATIC BOX', 'DS SATUAN', 'DS BOX', 'VLORIN SKIN SATUAN', 'VLORIN SKIN BOX', 'MADU MAGANZA', 'HARUMU NEW ELEGANT', 'HARUMU LOVABLE', 'HARUMU MAXIMA', 'HARUMU FREANKY', 'HARUMU PAKET', 'KRIM PARAMA', 'JCC OIL', 'PARFUM MEISIE', 'HIJAB SELLORA', 'NAKDE SNACK'],
-      sr12: ['GOMILKU 600G ORIGINAL', 'GOMILKU 600G COKLAT', 'GOMILKU 600G STRAWBERI', 'GOMILKU 600G GOLD', 'MANJA SR12 KAPSUL 60 KAPSUL', 'MANJA SR12 PIL 60 PIL', 'MISS MANJA WASH AND SPRAY', 'DEODORANT SPRAY 60 ML', 'DEO SPRAY PREMIUM 60 ML', 'DAILY COVER 10G NATURAL', 'DAILY COVER 10G SHEER PINK', 'DAILY COVER 10G BEIGE', 'MATTE COVER LOOSE POWDER 15G', 'BB CREAM NATURAL BEIGE 30ML', 'LIP CARE CHERRY 5G', 'LIP CARE NATURAL 5G', 'LIP BALM CHERRY MOISTURIZER & LIP COLOUR SR12'],
-      paranet: ['PARANET 2M x 2M', 'PARANET 2M x 3M', 'PARANET 2M x 4M', 'PARANET 2M x 5M', 'PARANET 2M x 6M', 'PARANET 2M x 7M', 'PARANET 2M x 8M', 'PARANET 2M x 9M', 'PARANET 2M x 10M', 'PARANET 3M x 2M', 'PARANET 3M x 3M', 'PARANET 3M x 4M', 'PARANET 3M x 5M', 'PARANET 3M x 6M', 'PARANET 3M x 7M', 'PARANET 3M x 8M', 'PARANET 3M x 9M', 'PARANET 3M x 10M', 'PARANET 4M x 2M', 'PARANET 4M x 3M', 'PARANET 4M x 4M', 'PARANET 4M x 5M', 'PARANET 4M x 6M', 'PARANET 4M x 7M', 'PARANET 4M x 8M', 'PARANET 4M x 9M', 'PARANET 4M x 10M']
+      sr12: ['GOMILKU 600G ORIGINAL', 'GOMILKU 600G COKLAT', 'GOMILKU 600G STRAWBERI', 'GOMILKU 600G GOLD', 'MANJA SR12 KAPSUL 60 KAPSUL', 'MANJA SR12 PIL 60 PIL', 'MISS MANJA WASH AND SPRAY', 'DEODORANT SPRAY 60 ML', 'DEO SPRAY PREMIUM 60 ML', 'DAILY COVER 10G NATURAL', 'DAILY COVER 10G SHEER PINK', 'DAILY COVER 10G BEIGE', 'MATTE COVER LOOSE POWDER 15G', 'BB CREAM NATURAL BEIGE 30ML', 'LIP CARE CHERRY 5G', 'LIP CARE NATURAL 5G', 'LIP BALM CHERRY MOISTURIZER & LIP COLOUR SR12']
     };
 
+    // Grouping khusus Paranet untuk fitur Collapse/Expand
+    const paranetGroups = {
+      '75% 2m': ['75% PARANET 2M x 10M', '75% PARANET 2M x 15M', '75% PARANET 2M x 20M', '75% PARANET 2M x 50M', '75% PARANET 2M x 100M'],
+      '85% 2m': ['85% PARANET 2M x 10M', '85% PARANET 2M x 15M', '85% PARANET 2M x 20M', '85% PARANET 2M x 50M', '85% PARANET 2M x 100M'],
+      '90% 2m': ['90% PARANET 2M x 2M', '90% PARANET 2M x 3M', '90% PARANET 2M x 4M', '90% PARANET 2M x 5M', '90% PARANET 2M x 6M', '90% PARANET 2M x 7M', '90% PARANET 2M x 8M', '90% PARANET 2M x 9M', '90% PARANET 2M x 10M'],
+      '95% 2m': ['95% PARANET 2M x 10M', '95% PARANET 2M x 50M', '95% PARANET 2M x 100M'],
+      '75% 3m': ['75% PARANET 3M x 10M', '75% PARANET 3M x 15M', '75% PARANET 3M x 30M', '75% PARANET 3M x 50M', '75% PARANET 3M x 100M'],
+      '85% 3m': ['85% PARANET 3M x 10M', '85% PARANET 3M x 15M', '85% PARANET 3M x 30M', '85% PARANET 3M x 50M', '85% PARANET 3M x 100M'],
+      '90% 3m': ['90% PARANET 3M x 3M', '90% PARANET 3M x 4M', '90% PARANET 3M x 5M', '90% PARANET 3M x 6M', '90% PARANET 3M x 7M', '90% PARANET 3M x 8M', '90% PARANET 3M x 9M', '90% PARANET 3M x 10M'],
+      '95% 3m': ['95% PARANET 3M x 10M', '95% PARANET 3M x 15M', '95% PARANET 3M x 30M', '95% PARANET 3M x 50M', '95% PARANET 3M x 100M'],
+      '90% 4m': ['90% PARANET 4M x 4M', '90% PARANET 4M x 5M', '90% PARANET 4M x 6M', '90% PARANET 4M x 7M', '90% PARANET 4M x 8M', '90% PARANET 4M x 9M', '90% PARANET 4M x 10M']
+    };
+
+    // Generate Field Produk Biasa
     function generateProductFields(tabId, prodList) {
       const container = document.getElementById(tabId);
       let html = '';
@@ -196,19 +248,39 @@
       container.innerHTML = html;
     }
 
+    // Generate Field Paranet dengan Accordion
+    function generateParanetFields() {
+      const container = document.getElementById('TabParanet');
+      let html = '';
+      for (const [groupName, prodList] of Object.entries(paranetGroups)) {
+        html += `<div class="accordion-group">`;
+        html += `<div class="accordion-header" onclick="toggleAccordion(this)">${groupName}</div>`;
+        html += `<div class="accordion-content">`;
+        prodList.forEach(prod => {
+          const safeId = 'prod_' + prod.replace(/[^a-zA-Z0-9]/g, '_');
+          html += `
+            <div class="form-group">
+              <label>${prod}</label>
+              <input type="number" id="${safeId}" data-product-name="${prod}" min="0" placeholder="0">
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+      }
+      container.innerHTML = html;
+    }
+
     generateProductFields('TabOzza', products.ozza);
     generateProductFields('TabSK', products.sk);
     generateProductFields('TabSR12', products.sr12);
-    generateProductFields('TabParanet', products.paranet);
+    generateParanetFields();
 
-    // Format input TOTAL jadi 000.000 sambil user ngetik, nilai asli (angka murni)
-    // disimpan di dataset.raw supaya yang dikirim ke backend tetap angka bersih.
-    const totalInput = document.getElementById('total');
-    totalInput.addEventListener('input', function () {
-      const raw = this.value.replace(/\D/g, '');
-      this.dataset.raw = raw;
-      this.value = raw ? Number(raw).toLocaleString('id-ID') : '';
-    });
+    // Fungsi Toggle Accordion
+    function toggleAccordion(element) {
+      element.classList.toggle('active');
+      var content = element.nextElementSibling;
+      content.classList.toggle('active');
+    }
 
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
@@ -246,8 +318,7 @@
 
     async function submitForm() {
       const nama = document.getElementById('nama').value;
-      const totalInput = document.getElementById('total');
-      const total = totalInput.dataset.raw || totalInput.value.replace(/\D/g, '');
+      const total = document.getElementById('total').value;
       const gudang = document.getElementById('gudang').value;
       const keterangan = document.getElementById('keterangan').value;
 
@@ -311,14 +382,8 @@
         const data = await response.json();
 
         if (data.ok) {
-          Swal.fire({
-            title: "Good job!",
-            text: "Order berhasil disimpan. ID: " + data.id,
-            icon: "success",
-            confirmButtonText: "OK"
-          }).then(() => {
-            location.reload();
-          });
+          document.querySelector('.container').innerHTML = `<div style="text-align:center; padding: 50px 20px;"><h2>✅ Berhasil</h2><p>Order ID: ${data.id}</p></div>`;
+          btn.style.display = 'none';
         } else {
           alert('Gagal: ' + (data.error || 'Unknown error'));
           btn.disabled = false;

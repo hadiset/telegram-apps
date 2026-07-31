@@ -125,7 +125,7 @@ function handleOrderSubmission_(payload) {
       var productText = '';
       for (var p in products) {
         if (Number(products[p]) > 0) {
-          productText += '• ' + p + ' : ' + products[p] + '\n';
+          productText += ' • `' + products[p] + '`  ' + p + '\n';
         }
       }
       
@@ -133,14 +133,14 @@ function handleOrderSubmission_(payload) {
       var picMention = picId ? `[${escapeMarkdown_(pic)}](tg://user?id=${picId})` : escapeMarkdown_(pic);
       
       var text = '✅ *Order berhasil disimpan*\n' +
-        'ID: `' + orderId + '`\n' +
-        'Nama: ' + escapeMarkdown_(payload.nama) + '\n' +
-        'Tanggal: ' + tanggal + '\n' +
-        'PIC: ' + picMention + '\n' +
-        'TOTAL: Rp ' + formatRupiah_(payload.total) + '\n' +
-        'GUDANG: ' + payload.gudang + '\n' +
-        'KETERANGAN: ' + escapeMarkdown_(payload.keterangan || '-') + '\n' +
-        'PRODUK:\n' + productText;
+        '*ID:* `' + orderId + '`\n' +
+        '*TANGGAL:* ' + tanggal + '\n' +
+        '*PIC:* ' + picMention + '\n' +        
+        '*NAMA:* ' + escapeMarkdown_(payload.nama) + '\n' +
+        '*TOTAL:* Rp ' + formatRupiah_(payload.total) + '\n' +
+        '*GUDANG:* ' + payload.gudang + '\n' +
+        '*KETERANGAN:* ' + escapeMarkdown_(payload.keterangan || '-') + '\n' +
+        '*PRODUK:*\n' + productText;
         
       callTelegramApi_('sendMessage', { 
         chat_id: chatId, 
