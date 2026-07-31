@@ -331,7 +331,8 @@
         Swal.fire({
           icon: 'error',
           title: 'Form Belum Lengkap',
-          text: 'Mohon isi NAMA, TOTAL, dan GUDANG di Tab Utama.'
+          text: 'Mohon isi NAMA, TOTAL, dan GUDANG di Tab Utama.',
+          confirmButtonColor: '#0088cc'
         });
         return;
       }
@@ -340,7 +341,8 @@
         Swal.fire({
           icon: 'error',
           title: 'File Kurang',
-          text: 'Mohon unggah File RESI (PDF) di Tab Utama.'
+          text: 'Mohon unggah File RESI (PDF) di Tab Utama.',
+          confirmButtonColor: '#0088cc'
         });
         return;
       }
@@ -361,7 +363,8 @@
         Swal.fire({
           icon: 'error',
           title: 'Produk Kosong',
-          text: 'Minimal harus mengisi 1 produk dengan jumlah lebih dari 0.'
+          text: 'Minimal harus mengisi 1 produk dengan jumlah lebih dari 0.',
+          confirmButtonColor: '#0088cc'
         });
         return;
       }
@@ -413,15 +416,13 @@
             html: `Order ID: <b>${data.id}</b> telah disimpan.`,
             showConfirmButton: false,
             timer: 2500
-          }).then(() => {
-            // Bisa ditambahkan tg.close() jika ingin otomatis tutup form
-            // tg.close();
           });
         } else {
           Swal.fire({
             icon: 'error',
             title: 'Gagal',
-            text: data.error || 'Unknown error'
+            text: data.error || 'Unknown error',
+            confirmButtonColor: '#0088cc'
           });
           btn.disabled = false;
           btn.innerText = 'SIMPAN ORDER';
@@ -430,7 +431,8 @@
         Swal.fire({
           icon: 'error',
           title: 'Error Koneksi',
-          text: err.message
+          text: err.message,
+          confirmButtonColor: '#0088cc'
         });
         btn.disabled = false;
         btn.innerText = 'SIMPAN ORDER';
