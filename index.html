@@ -414,8 +414,13 @@
             icon: 'success',
             title: 'Berhasil!',
             html: `Order ID: <b>${data.id}</b> telah disimpan.`,
-            showConfirmButton: false,
-            timer: 2500
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#0088cc',
+            allowOutsideClick: false
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.reload(); // Auto reload halaman
+            }
           });
         } else {
           Swal.fire({
